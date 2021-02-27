@@ -1,0 +1,534 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Fee Data
+Parameters:
+  FSKDeploymentProjectName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSImageName:
+    Type: String
+    Default: 'XXXECSImageNameXXX'
+  ECSUseSSL:
+    AllowedValues:
+      - 'false'
+      - 'true'
+    Type: String
+    Default: 'true'
+  ECSLogRegion:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  AppVpc:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  AppSubnet1:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  AppSubnet2:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  InvokeSecurityGroup:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSPublicSubnet1:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSPublicSubnet2:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSUsePublicLoadBalancer:
+    AllowedValues:
+      - 'false'
+      - 'true'
+    Type: String
+    Default: 'false'
+  ECSCertificate:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSHealthCheck:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSDomainName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSDNSName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSClusterName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSTaskDefName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSLoaderClusterName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSTaskDefLoader:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  LambdaUseScheduler:
+    AllowedValues:
+      - 'false'
+      - 'true'
+    Type: String
+    Default: 'false'
+  LambdaStateMachineSchedule:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  SumoEndpoint:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  CodeBucket:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagContact:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagService:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagEnvironment:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagOrgID:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagCapacity:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  BatchScheduleExpression:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ReportScheduleExpression:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+Conditions:
+  ShouldUseSSL: !Equals [ !Ref ECSUseSSL, 'true']
+  ShouldUsePublicLoadBalancer: !Equals [ !Ref ECSUsePublicLoadBalancer, 'true']
+Resources:
+  ECSExecuteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'ecs-tasks.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'ecs-tasks.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/SecretsManagerReadWrite'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AmazonECS_FullAccess'
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSAutoScaleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'application-autoscaling.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref ECSClusterName
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${FSKDeploymentProjectName}'
+  ECSTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        -
+          Image: !Ref ECSImageName
+          LogConfiguration:
+            LogDriver: 'awslogs'
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref ECSLogRegion
+              awslogs-stream-prefix: 'ecs'
+          Name: !Ref ECSTaskDefName
+          PortMappings:
+            -
+              ContainerPort: 80
+              HostPort: 80
+              Protocol: 'tcp'
+      Cpu: '512'
+      ExecutionRoleArn: !GetAtt ECSExecuteRole.Arn
+      Family: !Ref ECSTaskDefName
+      Memory: '1024'
+      NetworkMode: 'awsvpc'
+      RequiresCompatibilities:
+        - 'FARGATE'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+  ECSSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Sub '${FSKDeploymentProjectName}-Container'
+      SecurityGroupIngress:
+        -
+          CidrIp: '0.0.0.0/0'
+          FromPort: 80
+          IpProtocol: 'tcp'
+          ToPort: 80
+        -
+          CidrIp: '0.0.0.0/0'
+          FromPort: 443
+          IpProtocol: 'tcp'
+          ToPort: 443
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+      VpcId: !Ref AppVpc
+  ECSTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckPath: !Ref ECSHealthCheck
+      HealthCheckProtocol: 'HTTP'
+      Port: 80
+      Protocol: 'HTTP'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+      TargetType: 'ip'
+      VpcId: !Ref AppVpc
+  ECSLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      IpAddressType: 'ipv4'
+      Scheme: !If [ShouldUsePublicLoadBalancer, 'internet-facing', 'internal']
+      SecurityGroups:
+        - !GetAtt ECSSecurityGroup.GroupId
+      Subnets:
+        !If
+          - ShouldUsePublicLoadBalancer
+          -
+            - !Ref ECSPublicSubnet1
+            - !Ref ECSPublicSubnet2
+          -
+            - !Ref AppSubnet1
+            - !Ref AppSubnet2
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+      Type: 'application'
+  ECSLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates:
+        !If
+          - ShouldUseSSL
+          -
+            - CertificateArn: !Ref ECSCertificate
+          - !Ref 'AWS::NoValue'
+      DefaultActions:
+        -
+          TargetGroupArn: !Ref ECSTargetGroup
+          Type: 'forward'
+      LoadBalancerArn: !Ref ECSLoadBalancer
+      Port: !If [ShouldUseSSL, 443, 80]
+      Protocol: !If [ShouldUseSSL, 'HTTPS', 'HTTP']
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: ECSLoadBalancerListener
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 2
+      LaunchType: 'FARGATE'
+      LoadBalancers:
+        -
+          ContainerName: !Ref ECSTaskDefName
+          ContainerPort: 80
+          TargetGroupArn: !Ref ECSTargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: 'DISABLED'
+          SecurityGroups:
+            - !GetAtt ECSSecurityGroup.GroupId
+          Subnets:
+            - !Ref AppSubnet1
+            - !Ref AppSubnet2
+      PropagateTags: 'SERVICE'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+      TaskDefinition: !Ref ECSTaskDef
+  ECSRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt ECSLoadBalancer.DNSName
+        HostedZoneId: !GetAtt ECSLoadBalancer.CanonicalHostedZoneID
+      HostedZoneName: !Sub '${ECSDomainName}.'
+      Name: !Sub '${ECSDNSName}.'
+      Type: 'A'
+  ECSSumoLogicLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'zipfiles-${AWS::Region}'
+        S3Key: 'cloudwatchlogs.zip'
+      Environment:
+        Variables:
+          SUMO_ENDPOINT: !Ref SumoEndpoint
+      Handler: 'cloudwatchlogs_lambda.handler'
+      Role: !GetAtt ECSLambdaRole.Arn
+      Runtime: 'nodejs10.x'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+      Timeout: 300
+  ECSLogGroupSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: !GetAtt ECSSumoLogicLambda.Arn
+      FilterPattern: ''
+      LogGroupName: !Ref ECSLogGroup
+  ECSLogGroupSubscriptionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt ECSSumoLogicLambda.Arn
+      Principal: !Sub 'logs.${AWS::Region}.amazonaws.com'
+      SourceAccount: !Ref 'AWS::AccountId'
+  ECSAutoScaleTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 10
+      MinCapacity: 2
+      ResourceId: !Sub 'service/${ECSCluster}/${ECSService.Name}'
+      RoleARN: !GetAtt ECSAutoScaleRole.Arn
+      ScalableDimension: 'ecs:service:DesiredCount'
+      ServiceNamespace: 'ecs'
+  ECSAutoScaleCPUPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${FSKDeploymentProjectName}-AutoScale-CPU'
+      PolicyType: 'TargetTrackingScaling'
+      ScalingTargetId: !Ref ECSAutoScaleTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: 'ECSServiceAverageCPUUtilization'
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 300
+        TargetValue: 80
+  ECSAutoScaleMemPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${FSKDeploymentProjectName}-AutoScale-Mem'
+      PolicyType: 'TargetTrackingScaling'
+      ScalingTargetId: !Ref ECSAutoScaleTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: 'ECSServiceAverageMemoryUtilization'
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 300
+        TargetValue: 80
+Outputs:
+  ServiceURL:
+    Value:
+      !If
+        - ShouldUseSSL
+        - !Sub 'https://${ECSDNSName}'
+        - !Sub 'http://${ECSDNSName}'

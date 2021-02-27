@@ -1,0 +1,303 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Fee Data
+Parameters:
+  FSKDeploymentProjectName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSImageName:
+    Type: String
+    Default: 'XXXECSImageNameXXX'
+  ECSUseSSL:
+    AllowedValues:
+      - 'false'
+      - 'true'
+    Type: String
+    Default: 'true'
+  ECSLogRegion:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  AppVpc:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  AppSubnet1:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  AppSubnet2:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  InvokeSecurityGroup:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSPublicSubnet1:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSPublicSubnet2:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSUsePublicLoadBalancer:
+    AllowedValues:
+      - 'false'
+      - 'true'
+    Type: String
+    Default: 'false'
+  ECSCertificate:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSHealthCheck:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSDomainName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSDNSName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSClusterName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSTaskDefName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSLoaderClusterName:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ECSTaskDefLoader:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  LambdaUseScheduler:
+    AllowedValues:
+      - 'false'
+      - 'true'
+    Type: String
+    Default: 'false'
+  LambdaStateMachineSchedule:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  SumoEndpoint:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  CodeBucket:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagContact:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagService:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagEnvironment:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagOrgID:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  TagCapacity:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  BatchScheduleExpression:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+  ReportScheduleExpression:
+    Type: String
+    Default: 'Override-This-Parameter-Value'
+Resources:
+  ECSExecuteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'ecs-tasks.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'ecs-tasks.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/SecretsManagerReadWrite'
+        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AmazonECS_FullAccess'
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref ECSLoaderClusterName
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${FSKDeploymentProjectName}_loader'
+  ECSTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        -
+          Image: !Ref ECSImageName
+          LogConfiguration:
+            LogDriver: 'awslogs'
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref ECSLogRegion
+              awslogs-stream-prefix: 'ecs'
+          Name: !Ref ECSTaskDefLoader
+      Cpu: '512'
+      ExecutionRoleArn: !GetAtt ECSExecuteRole.Arn
+      Family: !Ref ECSTaskDefLoader
+      Memory: '1024'
+      NetworkMode: 'awsvpc'
+      RequiresCompatibilities:
+        - 'FARGATE'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+  ECSSumoLogicLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'zipfiles-${AWS::Region}'
+        S3Key: 'cloudwatchlogs.zip'
+      Environment:
+        Variables:
+          SUMO_ENDPOINT: !Ref SumoEndpoint
+      Handler: 'cloudwatchlogs_lambda.handler'
+      Role: !GetAtt ECSLambdaRole.Arn
+      Runtime: 'nodejs10.x'
+      Tags:
+        -
+          Key: 'Contact'
+          Value: !Ref TagContact
+        -
+          Key: 'Service'
+          Value: !Ref TagService
+        -
+          Key: 'Environment'
+          Value: !Ref TagEnvironment
+        -
+          Key: 'OrgID'
+          Value: !Ref TagOrgID
+        -
+          Key: 'Capacity'
+          Value: !Ref TagCapacity
+      Timeout: 300
+  ECSLogGroupSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: !GetAtt ECSSumoLogicLambda.Arn
+      FilterPattern: ''
+      LogGroupName: !Ref ECSLogGroup
+  ECSLogGroupSubscriptionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt ECSSumoLogicLambda.Arn
+      Principal: !Sub 'logs.${AWS::Region}.amazonaws.com'
+      SourceAccount: !Ref 'AWS::AccountId'
