@@ -1,0 +1,32 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      docker: 19
+  pre_build:
+    commands:
+      # Calculate ECR registry
+      - ECR_REGISTRY=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+      # Calculate full version
+      - FULL_VERSION=${RELEASE_VERSION}.${CODEBUILD_BUILD_NUMBER}
+      - echo Full version is ${FULL_VERSION}
+      # Login to AWS ECR to allow pushing new docker image
+      - aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+  build:
+    commands:
+      # Change to lambdas directory
+      - cd ${CODEBUILD_SRC_DIR}/${PROJECT_DIR}
+      - ls
+      # Generate docker image
+      - docker build -t ${IMAGE_NAME}:${FULL_VERSION}_task .
+      # Push docker image to AWS ECR
+      - docker push ${IMAGE_NAME}:${FULL_VERSION}_task
+      # Change to deployment directory
+      - cd ${CODEBUILD_SRC_DIR}/fargate_task/ecs_stack
+      # Inject final docker image URI into deployment template
+      - echo Injecting FULL_VERSION into deployment template
+      - sed -i s@XXXECSImageNameXXX@${IMAGE_NAME}:${FULL_VERSION}_task@g ecs_task.*
+artifacts:
+  base-directory: '${CODEBUILD_SRC_DIR}/fargate_task/ecs_stack'
+  files:
+    - '**/*'

@@ -1,0 +1,22 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      # Download TerraForm
+      - curl https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip -o terraform.zip
+      # Unzip download
+      - unzip terraform.zip
+      # Cleanup download
+      - rm terraform.zip
+      # Install TerraForm
+      - mv terraform /usr/local/bin
+      - terraform -version
+  build:
+    commands:
+      # Initialize TF pointing to state file in S3
+#      - terraform init -input=false -no-color -backend-config=bucket=${BUCKET} -backend-config=key=${TF_STATE_S3_KEY} -backend-config=region=${AWS_REGION} -backend-config=dynamodb_table=${DEPLOYMENT_PROJECT_NAME}
+      - terraform init
+      # Apply/Plan TerraForm pipeline
+      - terraform apply -input=false -no-color -auto-approve
