@@ -116,6 +116,7 @@ def zip_the_code():
     if os.path.exists(CODE_ZIP):
         os.remove(CODE_ZIP)
     zip_tree(os.path.join('..', 'fargate_task'), CODE_ZIP, 'fargate_task', True)
+    zip_tree(os.path.join('..', 'fargate_service'), CODE_ZIP, 'fargate_service', True)
     zip_file = zipfile.ZipFile("code.zip", 'a', zipfile.ZIP_DEFLATED)
     zip_file.close()
 
@@ -151,15 +152,32 @@ def teardown_pipeline():
     command_execution('terraform init', cwd=task_stack_path)
     command_execution('terraform destroy -auto-approve', cwd=task_stack_path)
 
+    # delete ecs service stack
+    task_stack_path = os.path.join(os.path.join('..', 'fargate_service'), 'ecs_service_stack')
+    command_execution('terraform init', cwd=task_stack_path)
+    command_execution('terraform destroy -auto-approve', cwd=task_stack_path)
+
     # delete main pipeline stack
     command_execution('terraform init')
     command_execution('terraform destroy -auto-approve')
 
     # deleting the dynamo DB table
-
+    print('Deleting dynamo db table...')
+    dynamodb_client = boto3.client('dynamodb', region_name='us-west-2')
+    dynamodb_client.delete_table(
+        TableName='Trig-Serv'
+    )
+    waiter = dynamodb_client.get_waiter('table_not_exists')
+    waiter.wait(
+        TableName='Trig-Serv',
+        WaiterConfig={
+            'Delay': 5,
+            'MaxAttempts': 10
+        }
+    )
 
 if __name__ == '__main__':
     teardown_pipeline()
-    # deploy_app()
-    # create_pipeline()
+    deploy_app()
+    create_pipeline()
 

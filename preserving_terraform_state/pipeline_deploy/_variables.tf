@@ -54,13 +54,21 @@ variable "UseContainer" {
   type = string
   default = "true"
 }
+variable "UseApiContainer" {
+  type = string
+  default = "true"
+}
 variable "CodeBucket" {
   type = string
   default = null
 }
 variable "ContainerStateKey" {
   type = string
-  default = "true"
+  default = null
+}
+variable "ApiStateKey" {
+  type = string
+  default = null
 }
 variable "TFVersion" {
   type = string

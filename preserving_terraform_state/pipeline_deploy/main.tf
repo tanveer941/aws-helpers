@@ -117,4 +117,47 @@ resource "aws_codepipeline" "CPPipe" {
       }
     }
   }
+  dynamic "stage" {
+    for_each = var.UseApiContainer ? [1] : []
+    content {
+      name = "Api-Build"
+      action {
+        category = "Build"
+        name = "Api-Build"
+        owner = "AWS"
+        provider = "CodeBuild"
+        version = "1"
+        configuration = {
+          ProjectName = aws_codebuild_project.CBApi[0].name
+        }
+        input_artifacts = [
+          "SourceCode"
+        ]
+        output_artifacts = [
+          "Api-Deployment"
+        ]
+        region = data.aws_region.current.name
+      }
+    }
+  }
+  dynamic "stage" {
+    for_each = var.UseApiContainer ? [1] : []
+    content {
+      name = "Api-Deploy"
+      action {
+        category = "Build"
+        name = "Api-Deploy"
+        owner = "AWS"
+        provider = "CodeBuild"
+        version = "1"
+        configuration = {
+          ProjectName = aws_codebuild_project.CBDeployApi[0].name
+        }
+        input_artifacts = [
+          "Api-Deployment"
+        ]
+        region = data.aws_region.current.name
+      }
+    }
+  }
 }
