@@ -25,7 +25,7 @@ phases:
       - cd ${CODEBUILD_SRC_DIR}/fargate_task/ecs_stack
       # Inject final docker image URI into deployment template
       - echo Injecting FULL_VERSION into deployment template
-      - sed -i s@XXXECSImageNameXXX@${IMAGE_NAME}:${FULL_VERSION}_task@g ecs_task.*
+      - sed -i s@XXXECSImageNameXXX@${IMAGE_NAME}:${FULL_VERSION}_task@g _variables.*
 artifacts:
   base-directory: '${CODEBUILD_SRC_DIR}/fargate_task/ecs_stack'
   files:
