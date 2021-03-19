@@ -5,3 +5,5 @@ scripts, files, code to help work with AWS resources
 [S3 trigger](s3_triggers)
 
 [Fargate templates](fargate-templates)
+
+[Remote backend and locking of terraform state](preserving_terraform_state)
