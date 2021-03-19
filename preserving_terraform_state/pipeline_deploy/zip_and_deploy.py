@@ -80,28 +80,7 @@ def check_dynamodb_exists():
                 }
             ],
             BillingMode='PAY_PER_REQUEST',
-            Tags=[
-                {
-                    'Key': 'Contact',
-                    'Value': "Bellwethers@ihsmarkit.com"
-                },
-                {
-                    'Key': 'Service',
-                    'Value': "CAPS:FeeData"
-                },
-                {
-                    'Key': 'Environment',
-                    'Value': "Dev"
-                },
-                {
-                    'Key': 'OrgID',
-                    'Value': "01444"
-                },
-                {
-                    'Key': 'Capacity',
-                    'Value': "BAU"
-                }
-            ]
+
         )
         waiter = dynamodb_client.get_waiter('table_exists')
         waiter.wait(
