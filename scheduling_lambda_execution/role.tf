@@ -35,6 +35,16 @@ data "aws_iam_policy_document" "LambdaStatePolicy" {
     ]
   }
 }
+# SNS policy document
+data "aws_iam_policy_document" "LambdaStateRoleAssumePolicy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      identifiers = ["states.amazonaws.com"]
+      type = "Service"
+    }
+  }
+}
 
 #####################
 ### IAM Resources ###
@@ -57,9 +67,19 @@ resource "aws_iam_role_policy_attachment" "LambdaRoleBasic" {
 
 resource "aws_iam_role_policy_attachment" "LambdaRoleLambdaFullAccess" {
   role = aws_iam_role.LambdaRole.id
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambdaFullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
 }
-resource "aws_iam_role_policy_attachment" "LambdaRolePipelineAccess" {
+resource "aws_iam_role_policy_attachment" "LambdaRoleVpc" {
   role = aws_iam_role.LambdaRole.id
-  policy_arn = "arn:aws:iam::aws:policy/AWSCodePipelineFullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+resource "aws_iam_role" "LambdaStateRole" {
+  name = "${var.ProjectName}-LambdaStateRole"
+  assume_role_policy = data.aws_iam_policy_document.LambdaStateRoleAssumePolicy.json
+  tags = local.common_tags
+}
+resource "aws_iam_role_policy" "LambdaStateRolePolicy" {
+  name = "${var.ProjectName}-LambdaStateRolePolicy"
+  role = aws_iam_role.LambdaStateRole.id
+  policy = data.aws_iam_policy_document.LambdaStatePolicy.json
 }

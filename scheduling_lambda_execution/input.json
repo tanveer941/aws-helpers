@@ -1,0 +1,74 @@
+{
+  "animal1": [
+    {
+      "name": "cow",
+      "type": "mammal",
+      "count": 785,
+      "places": {
+        "karnataka": 5,
+        "gujarat": 87,
+        "maharashtra": 69,
+        "rajasthan": 15,
+        "orissa": 32
+      }
+    },
+    {
+      "name": "dog",
+      "type": "land",
+      "count": 475,
+      "places": {
+        "karnataka": 74,
+        "gujarat": 5
+      }
+    },
+    {
+      "name": "cat",
+      "type": "land",
+      "count": 547,
+      "places": {
+        "gujarat": 44,
+        "maharashtra": 11,
+        "orissa": 3
+      }
+    }
+  ],
+  "animal2": [
+    {
+      "name": "hen",
+      "type": "air",
+      "count": 136,
+      "places": {
+        "gujarat": 7,
+        "maharashtra": 91
+      }
+    },
+    {
+      "name": "crow",
+      "type": "air",
+      "count": 745,
+      "places": {
+        "rajasthan": 51,
+        "orissa": 55
+      }
+    },
+    {
+      "name": "horse",
+      "type": "land",
+      "count": 155,
+      "places": {
+        "gujarat": 25,
+        "rajasthan": 31
+      }
+    },
+    {
+      "name": "duck",
+      "type": "water",
+      "count": 78,
+      "places": {
+        "karnataka": 12,
+        "maharashtra": 6,
+        "orissa": 2
+      }
+    }
+  ]
+}
