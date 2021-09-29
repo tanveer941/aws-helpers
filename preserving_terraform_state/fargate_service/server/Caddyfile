@@ -1,0 +1,40 @@
+:5001 {
+  route /auth* {
+    authp {
+      backends {
+        azure_oauth2_backend {
+          method oauth2
+          realm azure
+          provider azure
+          client_id xxxAZURE_CLIENT_IDxxx
+          client_secret xxxAZURE_CLIENT_SECRETxxx
+          scopes openid email profile
+          tenant_id xxxAZURE_TENANT_IDxxx
+        }
+      }
+    }
+    reverse_proxy :5000
+  }
+
+  route * {
+    jwt {
+        primary yes
+        set auth url /auth/oauth2/azure
+        allow roles anonymous
+        acl default allow
+    }
+    reverse_proxy :5000
+  }
+  route /api/health {
+    reverse_proxy :5000 {
+    header_up Host {host}
+    header_up X-Real-IP {remote}
+    header_up X-Forwarded-For {remote}
+
+    }
+  }
+  route /test* {
+    respond "tested!!!"
+  }
+
+}
