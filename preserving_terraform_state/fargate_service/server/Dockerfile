@@ -21,7 +21,3 @@ ENV PORT=5000
 # Run Flask server in the backend using pm2
 # Run Caddy in the forefront
 CMD ["./run_server.sh"]
-
-# docker build -t eit:1 .
-# docker run -ti --rm --entrypoint sh eit:1 -c bash
-# docker run -p 5001:5001 eit:1
