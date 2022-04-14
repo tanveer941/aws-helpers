@@ -7,3 +7,5 @@ scripts, files, code to help work with AWS resources
 [Fargate templates](fargate-templates)
 
 [Remote backend and locking of terraform state](preserving_terraform_state)
+
+[step-function-rds-snapshot-creation](step-function-rds-snapshot-creation)
