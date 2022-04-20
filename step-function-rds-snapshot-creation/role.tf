@@ -35,6 +35,7 @@ data "aws_iam_policy_document" "StepFunctionRoleStartPolicy" {
     }
   }
 }
+
 resource "aws_iam_role" "StepFunctionStartRole" {
   name = "${var.ProjectName}-StepFunctionStartRole"
   assume_role_policy = data.aws_iam_policy_document.StepFunctionRoleStartPolicy.json
@@ -62,4 +63,27 @@ resource "aws_iam_role_policy" "StateMachineStartExecution" {
     ]
   }
   EOF
+}
+
+## API Gateway Execution role ##
+data "aws_iam_policy_document" "APIGatewayTrustPolicy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      identifiers = ["apigateway.amazonaws.com"]
+      type = "Service"
+    }
+  }
+}
+
+resource "aws_iam_role" "TriggerStepFunctionFromAPIRole" {
+  name = "${var.ProjectName}-TriggerStepFunctionFromAPIRole"
+  assume_role_policy = data.aws_iam_policy_document.APIGatewayTrustPolicy.json
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.Me.account_id}:policy/ADSK-Boundary"
+  tags = local.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "APIStepFunctionAccess" {
+  role = aws_iam_role.TriggerStepFunctionFromAPIRole.id
+  policy_arn = "arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess"
 }

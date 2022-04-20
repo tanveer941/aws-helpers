@@ -101,3 +101,51 @@ resource "aws_cloudwatch_event_target" "TriggerRDSBackupTarget" {
   role_arn = aws_iam_role.StepFunctionStartRole.arn
   input = jsonencode({"DbName": "retool"})
 }
+
+## API Gateway
+resource "aws_api_gateway_rest_api" "StepFunctionRDSSnapshot" {
+  name        = "StepFunctionRDSSnapshot"
+  description = "API to invoke step function which creates RDS snapshot"
+}
+
+resource "aws_api_gateway_resource" "StepFunctionRDSSnapshotResource" {
+  rest_api_id = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
+  parent_id   = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.root_resource_id
+  path_part   = "createrdssnapshot"
+}
+
+resource "aws_api_gateway_method" "StepFunctionRDSSnapshotMethod" {
+  rest_api_id   = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
+  resource_id   = aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "StepFunctionRDSSnapshotIntegration" {
+  rest_api_id          = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
+  resource_id          = aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id
+  http_method          = aws_api_gateway_method.StepFunctionRDSSnapshotMethod.http_method
+  type                 = "AWS"
+  integration_http_method = "POST"
+  uri = "arn:aws:apigateway:${data.aws_region.current.name}:states:action/StartExecution"
+  credentials = aws_iam_role.TriggerStepFunctionFromAPIRole.arn
+  request_templates = {}
+}
+
+resource "aws_api_gateway_deployment" "StepFunctionRDSSnapshotDeployment" {
+  rest_api_id = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id,
+      aws_api_gateway_method.StepFunctionRDSSnapshotMethod.id,
+      aws_api_gateway_integration.StepFunctionRDSSnapshotIntegration.id,
+    ]))
+  }
+}
+
+
+resource "aws_api_gateway_stage" "StepFunctionRDSSnapshotStage" {
+  deployment_id = aws_api_gateway_deployment.StepFunctionRDSSnapshotDeployment.id
+  rest_api_id   = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
+  stage_name    = "invoke"
+}
