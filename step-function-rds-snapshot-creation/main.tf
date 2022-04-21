@@ -106,6 +106,9 @@ resource "aws_cloudwatch_event_target" "TriggerRDSBackupTarget" {
 resource "aws_api_gateway_rest_api" "StepFunctionRDSSnapshot" {
   name        = "StepFunctionRDSSnapshot"
   description = "API to invoke step function which creates RDS snapshot"
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
 }
 
 resource "aws_api_gateway_resource" "StepFunctionRDSSnapshotResource" {
@@ -129,7 +132,16 @@ resource "aws_api_gateway_integration" "StepFunctionRDSSnapshotIntegration" {
   integration_http_method = "POST"
   uri = "arn:aws:apigateway:${data.aws_region.current.name}:states:action/StartExecution"
   credentials = aws_iam_role.TriggerStepFunctionFromAPIRole.arn
-  request_templates = {}
+  passthrough_behavior = "WHEN_NO_MATCH"
+  request_templates = {"application/json" = <<EOF
+#set($data = $input.path('$'))
+#set($input = "{""DbName"": ""$data.DbName""}")
+{
+    "input": "$util.escapeJavaScript($input)",
+    "stateMachineArn": "${aws_sfn_state_machine.RDSBackupStateMachine.arn}"
+}
+  EOF
+  }
 }
 
 resource "aws_api_gateway_deployment" "StepFunctionRDSSnapshotDeployment" {
@@ -143,9 +155,22 @@ resource "aws_api_gateway_deployment" "StepFunctionRDSSnapshotDeployment" {
   }
 }
 
-
 resource "aws_api_gateway_stage" "StepFunctionRDSSnapshotStage" {
   deployment_id = aws_api_gateway_deployment.StepFunctionRDSSnapshotDeployment.id
   rest_api_id   = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
   stage_name    = "invoke"
+}
+
+resource "aws_api_gateway_integration_response" "MyDemoIntegrationResponse" {
+  rest_api_id = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
+  resource_id = aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id
+  http_method = aws_api_gateway_method.StepFunctionRDSSnapshotMethod.http_method
+  status_code = aws_api_gateway_method_response.response_200.status_code
+}
+
+resource "aws_api_gateway_method_response" "response_200" {
+  rest_api_id = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
+  resource_id = aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id
+  http_method = aws_api_gateway_method.StepFunctionRDSSnapshotMethod.http_method
+  status_code = "200"
 }
