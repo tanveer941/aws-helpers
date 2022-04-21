@@ -146,6 +146,7 @@ resource "aws_api_gateway_integration" "StepFunctionRDSSnapshotIntegration" {
 
 resource "aws_api_gateway_deployment" "StepFunctionRDSSnapshotDeployment" {
   rest_api_id = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
+  stage_name = "invoke"
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id,
@@ -155,13 +156,7 @@ resource "aws_api_gateway_deployment" "StepFunctionRDSSnapshotDeployment" {
   }
 }
 
-resource "aws_api_gateway_stage" "StepFunctionRDSSnapshotStage" {
-  deployment_id = aws_api_gateway_deployment.StepFunctionRDSSnapshotDeployment.id
-  rest_api_id   = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
-  stage_name    = "invoke"
-}
-
-resource "aws_api_gateway_integration_response" "MyDemoIntegrationResponse" {
+resource "aws_api_gateway_integration_response" "StepFunctionRDSSnapshotIntegrationResponse" {
   rest_api_id = aws_api_gateway_rest_api.StepFunctionRDSSnapshot.id
   resource_id = aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id
   http_method = aws_api_gateway_method.StepFunctionRDSSnapshotMethod.http_method
@@ -173,4 +168,8 @@ resource "aws_api_gateway_method_response" "response_200" {
   resource_id = aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id
   http_method = aws_api_gateway_method.StepFunctionRDSSnapshotMethod.http_method
   status_code = "200"
+}
+
+output "APIGatewayTriggerStepFunctionEndpoint" {
+  value = "${aws_api_gateway_deployment.StepFunctionRDSSnapshotDeployment.invoke_url}/${aws_api_gateway_resource.StepFunctionRDSSnapshotResource.path_part}"
 }
