@@ -80,6 +80,12 @@ def check_dynamodb_exists():
                 }
             ],
             BillingMode='PAY_PER_REQUEST',
+            Tags=[
+                {
+                    'Key': 'adsk:moniker',
+                    'Value': 'ICMPE-C-UE1'
+                }
+            ]
 
         )
         waiter = dynamodb_client.get_waiter('table_exists')

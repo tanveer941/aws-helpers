@@ -161,6 +161,7 @@ resource "aws_api_gateway_integration_response" "StepFunctionRDSSnapshotIntegrat
   resource_id = aws_api_gateway_resource.StepFunctionRDSSnapshotResource.id
   http_method = aws_api_gateway_method.StepFunctionRDSSnapshotMethod.http_method
   status_code = aws_api_gateway_method_response.response_200.status_code
+  depends_on = [aws_api_gateway_integration.StepFunctionRDSSnapshotIntegration]
 }
 
 resource "aws_api_gateway_method_response" "response_200" {
