@@ -11,3 +11,13 @@ Before we go ahead to create resources in AWS we need to setup a few things for 
 - Execute `terraform init` in the project directory
 - To create resources run the command `terraform apply -input=false -auto-approve`
 - To delete/remove resources run `terraform destroy -auto-approve`
+
+## Output
+- Towards the end of the Terraform deployment the output is the invoke url
+- The invoke url can be used in postman as 'POST' method
+- The input body for the request is a json `{"DbName": "retool"}`
+
+### Note:
+- The API is deployed to its respective stage during resource creation itself
+- On triggering the API from postman, the response is `Internal server error` but the state machine is triggered
+- Go to the API Gateway in the AWS console to redeploy the API. Try again, it returns a valid response with the state machine execution ID
