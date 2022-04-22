@@ -5,6 +5,7 @@ data "aws_region" "current" {}
 resource "aws_sfn_state_machine" "RDSBackupStateMachine" {
   name     = "${var.ProjectName}-state-machine"
   role_arn = aws_iam_role.StepFunctionRole.arn
+  tags = local.common_tags
 
   definition = <<EOF
 {
