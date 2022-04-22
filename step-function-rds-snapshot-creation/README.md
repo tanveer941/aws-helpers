@@ -6,6 +6,8 @@
 ## Pre-setup
 Before we go ahead to create resources in AWS we need to setup a few things for the terraform to work
 - Run the python file `pre-setup.py`, this will create dynamoDB table to lock terraform state
+- To uniquely name the snapshot being created the execution name is appended with the database name
+- The execution name is alpha-numeric and is unique for every execution started. It is accessed by the step function context object through `$$.Execution.Name`
 
 ## Execution
 - Execute `terraform init` in the project directory
