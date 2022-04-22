@@ -33,7 +33,7 @@ resource "aws_sfn_state_machine" "RDSBackupStateMachine" {
       "Type": "Task",
       "Parameters": {
         "DbInstanceIdentifier.$": "$.DbInstances[0].DbInstanceIdentifier",
-        "DbSnapshotIdentifier.$": "States.Format('{}-{}', $.DbInstances[0].DbInstanceIdentifier, $.DbInstances[0].DbInstanceIdentifier)"
+        "DbSnapshotIdentifier.$": "States.Format('{}-{}', $.DbInstances[0].DbInstanceIdentifier, $$.Execution.Name)"
       },
       "Resource": "arn:aws:states:::aws-sdk:rds:createDBSnapshot",
       "Next": "GetDBSnapshotStatus",
@@ -92,6 +92,7 @@ resource "aws_cloudwatch_event_rule" "TriggerRDSBackupRule" {
   name                = "TriggerRDSBackup"
   description         = "Trigger RDS Backup nightly"
   schedule_expression = "cron(0 0 * * ? *)"
+  is_enabled = false
   tags = local.common_tags
 }
 
